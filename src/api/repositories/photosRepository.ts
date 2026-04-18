@@ -338,13 +338,32 @@ export async function listPickerSessionMediaItems(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const items: any[] = response.data.mediaItems || [];
 
-  const photos = items.map((item) => ({
-    id: item.mediaFile?.mediaFileId ?? item.id ?? "",
-    filename: item.mediaFile?.filename ?? "",
-    baseUrl: item.mediaFile?.baseUrl ?? "",
-    productUrl: item.mediaFile?.baseUrl ?? "",
-    mimeType: item.mediaFile?.mimeType,
-  })) as PhotoItem[];
+  const photos = items.map((item) => {
+    const meta = item.mediaFile?.mediaFileMetadata;
+    const photoMeta = meta?.photoMetadata;
+    return {
+      id: item.mediaFile?.mediaFileId ?? item.id ?? "",
+      filename: item.mediaFile?.filename ?? "",
+      baseUrl: item.mediaFile?.baseUrl ?? "",
+      productUrl: item.mediaFile?.baseUrl ?? "",
+      mimeType: item.mediaFile?.mimeType,
+      mediaMetadata: {
+        creationTime: item.createTime ?? "",
+        width: meta?.width != null ? String(meta.width) : undefined,
+        height: meta?.height != null ? String(meta.height) : undefined,
+        photo:
+          meta?.cameraMake || meta?.cameraModel || photoMeta
+            ? {
+                cameraMake: meta?.cameraMake,
+                cameraModel: meta?.cameraModel,
+                focalLength: photoMeta?.focalLength,
+                apertureFNumber: photoMeta?.apertureFNumber,
+                isoEquivalent: photoMeta?.isoEquivalent,
+              }
+            : undefined,
+      },
+    };
+  }) as PhotoItem[];
 
   return { photos, nextPageToken: response.data.nextPageToken };
 }
